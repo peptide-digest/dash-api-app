@@ -195,9 +195,12 @@ def update_article_info(n_clicks, input_value, article_type):
         return [
             html.H5("Article Information:"),
             html.P(f"Title: {article_info['title']}"),
+            dcc.Markdown(f"**Score:**\n{article_info['model_score']}"),
             dcc.Markdown(f"**Bullet Points:**\n{article_info['model_bullet_points']}"),
-            dcc.Markdown(f"**Metadata:**\n{article_info['model_metadata']}"),
             dcc.Markdown(f"**Summary:**\n{article_info['model_summary']}"),
+            dcc.Markdown(f"**Scoring Reasoning:**\n{article_info['model_score_justification']}"),
+            dcc.Markdown(f"**Metadata:**\n{article_info['model_metadata']}"),
+            
             # Include more fields as necessary
         ]
     else:
