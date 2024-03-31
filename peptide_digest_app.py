@@ -1,5 +1,5 @@
 import dash
-from dash import dcc, html
+from dash import dcc, html, Dash
 from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc  
 from dash.exceptions import PreventUpdate
@@ -182,31 +182,37 @@ def update_placeholder(n1, n2, n3):
 )
 def update_article_info(n_clicks, input_value, article_type):
     if n_clicks is None or n_clicks < 1:
-        # No clicks yet, or the button hasn't been clicked.
         raise PreventUpdate
-    
-    # Construct the query URL based on the selected article type and input value
+
     query_param = 'doi' if article_type == 'DOI' else 'url'
     response = requests.get(f"http://127.0.0.1:8000/retrieve/?{query_param}={input_value}")
 
     if response.status_code == 200:
         article_info = response.json()
-        # Use dcc.Markdown to format and return the desired information from the article, respecting newline characters
-        return [
+        
+        # Detailed markdown presentation
+        detailed_info = html.Div([
             html.H5("Article Information:"),
             html.P(f"Title: {article_info['title']}"),
-            dcc.Markdown(f"**Score:**\n{article_info['model_score']}"),
-            dcc.Markdown(f"**Bullet Points:**\n{article_info['model_bullet_points']}"),
-            dcc.Markdown(f"**Summary:**\n{article_info['model_summary']}"),
-            dcc.Markdown(f"**Scoring Reasoning:**\n{article_info['model_score_justification']}"),
-            dcc.Markdown(f"**Metadata:**\n{article_info['model_metadata']}"),
-            
-            # Include more fields as necessary
-        ]
-    else:
-        # Handle errors or article not found
-        return html.P("Article not found or error in fetching information.")
+  
+        ], className="article-detailed-info")
 
+        # Tabbed interface
+        tabbed_interface = dbc.Tabs([
+            dbc.Tab(dcc.Markdown(f"**Bullet Points:**\n{article_info['model_bullet_points']}\n\n"
+                                 f"**Summary:**\n{article_info['model_summary']}"), 
+                    label="Summary"),
+            dbc.Tab(dcc.Markdown(f"**Score:**\n{article_info['model_score']}\n\n"
+                                 f"**Scoring Reasoning:**\n{article_info['model_score_justification']}"), 
+                    label="Score"),
+            dbc.Tab(dcc.Markdown(f"**Metadata:**\n{article_info['model_metadata']}"), 
+                    label="Metadata"),
+        ], className="article-tabs")
+
+        # Combine detailed info and tabs in a single Div to avoid list of lists
+        return html.Div([detailed_info, tabbed_interface])
+    else:
+        return html.P("Article not found or error in fetching information.")
 
 @app.callback(
     Output("db-search-results", "children"),
