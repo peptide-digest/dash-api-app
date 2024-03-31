@@ -237,7 +237,8 @@ def update_db_search_results(n_clicks, search_term, sort_order):
             return [html.Div([
                 html.H3(article['title']),
                 html.P(f"DOI: {article['doi']}"),
-                html.P(f"Date: {article['date']}")
+                html.P(f"Date: {article['date']}"),
+                html.P(f"Score: {article['score']}")
             ], style={'margin-bottom': '20px'}) for article in articles]
         else:
             # If no articles are found, display a message including the search term
