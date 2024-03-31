@@ -86,17 +86,23 @@ async def retrieve(doi: str = None, url: str = None):
 async def search_papers(term: str, sort: str = "new_to_old"):
     conn = sqlite3.connect("articles.db")
     c = conn.cursor()
-    order = "DESC" if sort == "new_to_old" else "ASC"
-    query = f"""SELECT title, doi, date FROM articles
+
+    # Determine the ORDER BY clause based on the sort parameter
+    if sort == "score":
+        order_by_clause = "model_score DESC"
+    else:
+        # Default to sorting by date
+        order_by_clause = "date DESC" if sort == "new_to_old" else "date ASC"
+
+    query = f"""SELECT title, doi, date, model_score FROM articles
                 WHERE keywords LIKE '%' || ? || '%'
                 OR model_metadata LIKE '%' || ? || '%'
-                ORDER BY date {order}"""
+                ORDER BY {order_by_clause}"""
     c.execute(query, (term, term,))
     results = c.fetchall()
     conn.close()
+
     if results:
-        return [{"title": result[0], "doi": result[1], "date": result[2]} for result in results]
+        return [{"title": result[0], "doi": result[1], "date": result[2], "score": result[3]} for result in results]
     else:
         return []
-
-
