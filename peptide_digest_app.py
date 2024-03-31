@@ -9,12 +9,17 @@ import requests
 sort_options = dbc.RadioItems(
     options=[
         {"label": "New to Old", "value": "new_to_old"},
-        {"label": "Old to New", "value": "old_to_new"}
+        {"label": "Old to New", "value": "old_to_new"},
+        {"label": "Score", "value": "score"}  # New option for sorting by score
     ],
     value="new_to_old",  # Default value
     id="sort-options",
     inline=True
 )
+
+
+
+
 
 # Create a dropdown menu for the article type
 articletype_menu = [
@@ -204,7 +209,7 @@ def update_article_info(n_clicks, input_value, article_type):
                     label="Summary"),
             dbc.Tab(dcc.Markdown(f"**Score:**\n{article_info['model_score']}\n\n"
                                  f"**Scoring Reasoning:**\n{article_info['model_score_justification']}"), 
-                    label="Score"),
+                    label="Scoring Criteria"),
             dbc.Tab(dcc.Markdown(f"**Metadata:**\n{article_info['model_metadata']}"), 
                     label="Metadata"),
         ], className="article-tabs")
