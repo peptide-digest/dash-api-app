@@ -13,7 +13,7 @@ sort_options = dbc.RadioItems(
     options=[
         {"label": "New to Old", "value": "new_to_old"},
         {"label": "Old to New", "value": "old_to_new"},
-        {"label": "Score", "value": "score"},  # New option for sorting by score
+        {"label": "Score", "value": "score"}, 
     ],
     value="new_to_old",  # Default value
     id="sort-options",
@@ -43,7 +43,7 @@ article_id_input = dbc.InputGroup(
             id="user-input-article-type",
             type="text",
             placeholder="Enter article DOI/URL/PII",
-            style={"color": custom_colors["dark-blue"]},  # Text color change
+            style={"color": custom_colors["dark-blue"]},  
         ),
         dbc.Button(
             "Submit",
@@ -77,10 +77,14 @@ app.layout = dbc.Container(
                 dbc.NavItem(dbc.NavLink("Search", href="/search")),
                 dbc.NavItem(
                     dbc.NavLink("DB Search", href="/dbsearch")
-                ),  # Add DB Search link
+                ), 
                 dbc.NavItem(dbc.NavLink("About", href="/about")),
             ],
-            brand="Peptide Digest",
+            brand=html.Div([
+                # Logo and title
+                html.Img(src="assets/peptide_digest_logo.jpeg", height="40px"), 
+                html.Span("Peptide Digest", style={"marginLeft": "10px"})
+            ]),
             brand_href="/",
             color=custom_colors["teal"],
             dark=True,
@@ -89,7 +93,7 @@ app.layout = dbc.Container(
         dcc.Location(id="url", refresh=False),
         dbc.Container(
             id="page-content", className="mt-4"
-        ),  # Use dbc.Container for content area
+        ), 
     ]
 )
 
@@ -98,7 +102,7 @@ app.layout = dbc.Container(
 @app.callback(Output("page-content", "children"), [Input("url", "pathname")])
 def display_page(pathname):
     if pathname == "/search":
-        # This part is specifically for the search page
+        # Content for the 'Search' page
         return dbc.Container(
             [
                 html.H2(
@@ -107,8 +111,8 @@ def display_page(pathname):
                 article_id_input,  # Include the updated input group here
                 html.Div(
                     id="article-info",
-                    style={"color": custom_colors["dark-blue"]},  # Text color change
-                ),  # Area to display the fetched article information
+                    style={"color": custom_colors["dark-blue"]},  
+                ),  
             ]
         )
     elif pathname == "/about":
@@ -122,15 +126,15 @@ def display_page(pathname):
                 html.Br(),
                 html.P(
                     "We are a team of UC Berkeley students in the Master of Molecular Science and Software Engineering (MSSE) program working with Merck to develop a tool that provides efficient summaries of scientific publications! Our goal is to help Merck researchers stay updated with the latest computational peptide research.",
-                    style={"color": custom_colors["dark-blue"]},  # Text color change
+                    style={"color": custom_colors["dark-blue"]}, 
                 ),
                 html.P(
                     "Our team members include: Joshua Blomgren, Elizabeth Gilson, and Jeffrey Jacob.",
-                    style={"color": custom_colors["dark-blue"]},  # Text color change
+                    style={"color": custom_colors["dark-blue"]},  
                 ),
                 html.P(
                     "We are advised by Dr. Jennifer Johnston, Dr. Gregory Bryman, Dr. Tianchi Chen, and Dr. Wendong Ge from Merck and by Dr. Jessica Nash from MSSE.",
-                    style={"color": custom_colors["dark-blue"]},  # Text color change
+                    style={"color": custom_colors["dark-blue"]},  
                 ),
             ]
         )
@@ -143,9 +147,9 @@ def display_page(pathname):
                     id="db-search-input",
                     placeholder="Enter search term",
                     type="text",
-                    style={"color": custom_colors["dark-blue"]},  # Text color change
+                    style={"color": custom_colors["dark-blue"]},  
                 ),
-                sort_options,  # Include sorting options here
+                sort_options,  
                 dbc.Button(
                     "Search",
                     id="db-search-btn",
@@ -155,7 +159,7 @@ def display_page(pathname):
                 ),
                 html.Div(
                     id="db-search-results",
-                    style={"color": custom_colors["dark-blue"]},  # Text color change
+                    style={"color": custom_colors["dark-blue"]}, 
                 ),
             ]
         )
@@ -170,17 +174,17 @@ def display_page(pathname):
                 ),
                 html.P(
                     "This tool provides efficient summaries of scientific publications, helping researchers stay updated with the latest computational peptide research.",
-                    style={"color": custom_colors["dark-blue"]},  # Text color change
+                    style={"color": custom_colors["dark-blue"]},  
                 ),
                 html.P(
                     "Get started by selecting an article type and entering a DOI, URL, or PII below.",
-                    style={"color": custom_colors["dark-blue"]},  # Text color change
+                    style={"color": custom_colors["dark-blue"]},  
                 ),
                 html.Hr(),
-                article_id_input,  # The updated input section with the submit button
+                article_id_input,  # The input section with the submit button
                 html.Div(
                     id="article-info",
-                    style={"color": custom_colors["dark-blue"]},  # Text color change
+                    style={"color": custom_colors["dark-blue"]},  
                 ),  # This will display the results
             ],
             className="mt-4",
@@ -280,7 +284,6 @@ def update_article_info(n_clicks, input_value, article_type):
     if response.status_code == 200:
         article_info = response.json()
 
-        # Detailed markdown presentation
         detailed_info = html.Div(
             [
                 html.H5(
@@ -345,35 +348,35 @@ def update_db_search_results(n_clicks, search_term, sort_order):
         articles = response.json()
         if articles:
             # If articles are found, display them
-            return [
-                html.Div(
+            table_header = [
+                html.Th("Title", style={"color": custom_colors["dark-blue"]}),
+                html.Th("DOI", style={"color": custom_colors["dark-blue"]}),
+                html.Th("Date", style={"color": custom_colors["dark-blue"], "width": "10%"}),
+                html.Th("Score", style={"color": custom_colors["dark-blue"], "width": "4%"}),
+            ]
+            table_rows = [
+                html.Tr(
                     [
-                        html.H3(
-                            article["title"],
-                            style={"color": custom_colors["dark-blue"]},
-                        ),
-                        html.P(
-                            f"DOI: {article['doi']}",
-                            style={"color": custom_colors["dark-blue"]},
-                        ),
-                        html.P(
-                            f"Date: {article['date']}",
-                            style={"color": custom_colors["dark-blue"]},
-                        ),
-                        html.P(
-                            f"Score: {article['score']}",
-                            style={"color": custom_colors["dark-blue"]},
-                        ),
-                    ],
-                    style={"margin-bottom": "20px"},
+                        html.Td(article["title"]),
+                        html.Td(article["doi"]),
+                        html.Td(article["date"]),
+                        html.Td(article["score"]),
+                    ]
                 )
                 for article in articles
             ]
+            return dbc.Table(
+                [html.Thead(table_header), html.Tbody(table_rows)],
+                bordered=True,
+                hover=True,
+                responsive=True,
+                striped=True,
+            )
         else:
             # If no articles are found, display a message including the search term
             return html.P(
                 f"No articles found matching the search term: '{search_term}'.",
-                style={"color": custom_colors["dark-blue"]},  # Text color change
+                style={"color": custom_colors["dark-blue"]},  
             )
     else:
         # If there's an error with the request, display a generic error message
@@ -381,7 +384,7 @@ def update_db_search_results(n_clicks, search_term, sort_order):
             "An error occurred while fetching search results.",
             style={"color": custom_colors["dark-blue"]},
         )
-
+    
 
 # Run the application
 if __name__ == "__main__":
