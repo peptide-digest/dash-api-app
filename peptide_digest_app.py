@@ -264,7 +264,6 @@ def update_placeholder(n1, n2, n3):
         return "Enter article DOI"
 
 
-# Callback for submitting DOI/URL and updating the article information
 @app.callback(
     Output("article-info", "children"),
     [Input("submit-btn", "n_clicks")],
@@ -290,8 +289,12 @@ def update_article_info(n_clicks, input_value, article_type):
                     "Article Information:", style={"color": custom_colors["dark-blue"]}
                 ),
                 html.P(
-                    f"Title: {article_info['title']}",
-                    style={"color": custom_colors["dark-blue"]},
+                    html.A(
+                        article_info['title'],
+                        href=article_info['url'],
+                        target='_blank',  # Open link in a new tab
+                        style={"color": custom_colors["dark-blue"]}
+                    )
                 ),
             ],
             className="article-detailed-info",
@@ -352,7 +355,7 @@ def update_db_search_results(n_clicks, search_term, sort_order):
                 html.Th("Title", style={"color": custom_colors["dark-blue"]}),
                 html.Th("DOI", style={"color": custom_colors["dark-blue"]}),
                 html.Th("Date", style={"color": custom_colors["dark-blue"], "width": "10%"}),
-                html.Th("Score", style={"color": custom_colors["dark-blue"], "width": "4%"}),
+                html.Th("Score", style={"color": custom_colors["dark-blue"], "width": "4.5%"}),
             ]
             table_rows = [
                 html.Tr(
