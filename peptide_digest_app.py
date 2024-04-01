@@ -260,7 +260,6 @@ def update_placeholder(n1, n2, n3):
         return "Enter article DOI"
 
 
-# Callback for submitting DOI/URL and updating the article information
 @app.callback(
     Output("article-info", "children"),
     [Input("submit-btn", "n_clicks")],
@@ -287,8 +286,12 @@ def update_article_info(n_clicks, input_value, article_type):
                     "Article Information:", style={"color": custom_colors["dark-blue"]}
                 ),
                 html.P(
-                    f"Title: {article_info['title']}",
-                    style={"color": custom_colors["dark-blue"]},
+                    html.A(
+                        article_info['title'],
+                        href=article_info['url'],
+                        target='_blank',  # Open link in a new tab
+                        style={"color": custom_colors["dark-blue"], "text-decoration": "underline"}
+                    )
                 ),
             ],
             className="article-detailed-info",
@@ -345,30 +348,30 @@ def update_db_search_results(n_clicks, search_term, sort_order):
         articles = response.json()
         if articles:
             # If articles are found, display them
-            return [
-                html.Div(
+            table_header = [
+                html.Th("Title", style={"color": custom_colors["dark-blue"]}),
+                html.Th("DOI", style={"color": custom_colors["dark-blue"]}),
+                html.Th("Date", style={"color": custom_colors["dark-blue"], "width": "10%"}),
+                html.Th("Score", style={"color": custom_colors["dark-blue"], "width": "4%"}),
+            ]
+            table_rows = [
+                html.Tr(
                     [
-                        html.H3(
-                            article["title"],
-                            style={"color": custom_colors["dark-blue"]},
-                        ),
-                        html.P(
-                            f"DOI: {article['doi']}",
-                            style={"color": custom_colors["dark-blue"]},
-                        ),
-                        html.P(
-                            f"Date: {article['date']}",
-                            style={"color": custom_colors["dark-blue"]},
-                        ),
-                        html.P(
-                            f"Score: {article['score']}",
-                            style={"color": custom_colors["dark-blue"]},
-                        ),
-                    ],
-                    style={"margin-bottom": "20px"},
+                        html.Td(article["title"]),
+                        html.Td(article["doi"]),
+                        html.Td(article["date"]),
+                        html.Td(article["score"]),
+                    ]
                 )
                 for article in articles
             ]
+            return dbc.Table(
+                [html.Thead(table_header), html.Tbody(table_rows)],
+                bordered=True,
+                hover=True,
+                responsive=True,
+                striped=True,
+            )
         else:
             # If no articles are found, display a message including the search term
             return html.P(
@@ -381,7 +384,7 @@ def update_db_search_results(n_clicks, search_term, sort_order):
             "An error occurred while fetching search results.",
             style={"color": custom_colors["dark-blue"]},
         )
-
+    
 
 # Run the application
 if __name__ == "__main__":
