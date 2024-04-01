@@ -13,7 +13,8 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
-def retrieve_article(doi=None, url=None):
+
+def retrieve_article(doi=None, url=None, pii=None):
     """
     Retrieve an article from a SQLite database.
 
@@ -23,14 +24,16 @@ def retrieve_article(doi=None, url=None):
         The DOI of the article to be retrieved.
     url : str, optional
         The URL of the article to be retrieved.
+    pii : str, optional
+        The PII of the article to be retrieved.
 
     Returns
     -------
     dict
         A dictionary containing the title, authors, journal, date, URL, DOI, and keywords of the article.
     """
-    if not doi and not url:
-        return "No DOI or URL provided."
+    if not doi and not url and not pii:
+        return "No article identifier provided."
 
     if url and not url.startswith("https://"):
         if url.startswith("www."):
@@ -44,8 +47,11 @@ def retrieve_article(doi=None, url=None):
         c.execute("SELECT * FROM articles WHERE doi=?", (doi,))
     elif url:
         c.execute("SELECT * FROM articles WHERE url=?", (url,))
+    elif pii:
+        pii = "https://www.sciencedirect.com/science/article/pii/" + pii
+        c.execute("SELECT * FROM articles WHERE url=?", (pii,))
     else:
-        return "No DOI or URL provided."
+        return "No article identifier provided."
     article = c.fetchone()
     conn.close()
 
@@ -72,12 +78,13 @@ def retrieve_article(doi=None, url=None):
         return "Article not found in database."
 
 
-
-
 @app.get("/retrieve/")
-async def retrieve(doi: str = None, url: str = None):
-    article_info = retrieve_article(doi=doi, url=url)
-    if article_info in ["No DOI or URL provided.", "Article not found in database."]:
+async def retrieve(doi: str = None, url: str = None, pii: str = None):
+    article_info = retrieve_article(doi=doi, url=url, pii=pii)
+    if article_info in [
+        "No article identifier provided.",
+        "Article not found in database.",
+    ]:
         raise HTTPException(status_code=404, detail=article_info)
     return article_info
 
@@ -98,11 +105,25 @@ async def search_papers(term: str, sort: str = "new_to_old"):
                 WHERE keywords LIKE '%' || ? || '%'
                 OR model_metadata LIKE '%' || ? || '%'
                 ORDER BY {order_by_clause}"""
-    c.execute(query, (term, term,))
+    c.execute(
+        query,
+        (
+            term,
+            term,
+        ),
+    )
     results = c.fetchall()
     conn.close()
 
     if results:
-        return [{"title": result[0], "doi": result[1], "date": result[2], "score": result[3]} for result in results]
+        return [
+            {
+                "title": result[0],
+                "doi": result[1],
+                "date": result[2],
+                "score": result[3],
+            }
+            for result in results
+        ]
     else:
         return []
