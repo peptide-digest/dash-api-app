@@ -42,6 +42,7 @@ layout = dbc.Navbar(
                                         dbc.NavLink(
                                             html.I(className="bi bi-github"),
                                             href="https://github.com/peptide-digest",
+                                            target="_blank",  
                                             external_link=True,
                                         )
                                     ),

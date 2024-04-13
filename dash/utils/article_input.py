@@ -204,7 +204,6 @@ def update_article_info(n_clicks, input_value, article_type):
         )
 
 
-
 def get_article_info(input_doi):
     """
     This function retrieves the article information based on the DOI.
@@ -217,9 +216,7 @@ def get_article_info(input_doi):
     -------
     html.Div: A Div containing the detailed information about the article.
     """
-    response = requests.get(
-        f"http://127.0.0.1:8000/retrieve/?doi={input_doi}"
-    )
+    response = requests.get(f"http://127.0.0.1:8000/retrieve/?doi={input_doi}")
 
     if response.status_code == 200:
         article_info = response.json()
@@ -263,7 +260,7 @@ def get_article_info(input_doi):
                     label="Metadata",
                 ),
             ],
-            className="article-tabs"
+            className="article-tabs",
         )
 
         # Combine detailed info and tabs in a single Div to avoid list of lists

@@ -22,12 +22,17 @@ sort_options = dbc.RadioItems(
     style={"color": custom_colors["dark-blue"]},
 )
 
-modal_trigger = html.Button("Open Modal", id="open-modal-btn", style={'display': 'none'})  # Add a button to trigger the modal
+# Pop-up modal for displaying detailed article information
+modal_trigger = html.Button(
+    "Open Modal", id="open-modal-btn", style={"display": "none"}
+)  # Add a button to trigger the modal
 modal = html.Div(
     [
         dbc.Modal(
             [
-                dbc.ModalHeader("Article Information", style={"color": custom_colors["dark-blue"]}),
+                dbc.ModalHeader(
+                    "Article Information", style={"color": custom_colors["dark-blue"]}
+                ),
                 dbc.ModalBody(id="modal-article-body"),
             ],
             id="modal-article",
@@ -122,6 +127,7 @@ navigation_layout = dbc.Navbar(
                                         dbc.NavLink(
                                             html.I(className="bi bi-github"),
                                             href="https://github.com/peptide-digest",
+                                            target="_blank",
                                             external_link=True,
                                         )
                                     ),
@@ -144,7 +150,6 @@ navigation_layout = dbc.Navbar(
 # Define the layout of the application
 app.layout = dbc.Container(
     [
-        # Navbar
         navigation_layout,
         # Page content will be rendered by the callback
         dcc.Location(id="url", refresh=False),
@@ -197,27 +202,27 @@ def display_page(pathname):
     elif pathname == "/dbsearch":
         return dbc.Container(
             [
-            html.H2("Database Search", style={"color": custom_colors["dark-blue"]}),
-            dbc.Input(
-                id="db-search-input",
-                placeholder="Enter search term",
-                type="text",
-                style={"color": custom_colors["dark-blue"]},
-            ),
-            sort_options,
-            dbc.Button(
-                "Search",
-                id="db-search-btn",
-                color="primary",
-                className="mt-2",
-                style={"background-color": custom_colors["teal"]},
-            ),
-            html.Div(
-                id="db-search-results",
-                style={"color": custom_colors["dark-blue"]},
-            ),
-            modal_trigger, 
-            modal, 
+                html.H2("Database Search", style={"color": custom_colors["dark-blue"]}),
+                dbc.Input(
+                    id="db-search-input",
+                    placeholder="Enter search term",
+                    type="text",
+                    style={"color": custom_colors["dark-blue"]},
+                ),
+                sort_options,
+                dbc.Button(
+                    "Search",
+                    id="db-search-btn",
+                    color="primary",
+                    className="mt-2",
+                    style={"background-color": custom_colors["teal"]},
+                ),
+                html.Div(
+                    id="db-search-results",
+                    style={"color": custom_colors["dark-blue"]},
+                ),
+                modal_trigger,
+                modal,
             ]
         )
 
@@ -444,10 +449,10 @@ def update_db_search_results(n_clicks, search_term, sort_order):
                         html.Td(article["date"]),
                         html.Td(article["score"]),
                     ],
-                    id={'type': 'table-row', 'index': i},  # Add an id to each table row
+                    id={"type": "table-row", "index": i},  # Add an id to each table row
                     # Add a callback to toggle the modal when the table row is clicked
                     n_clicks=0,
-                    style={'cursor': 'pointer'}
+                    style={"cursor": "pointer"},
                 )
                 for i, article in enumerate(articles)
             ]
@@ -474,22 +479,26 @@ def update_db_search_results(n_clicks, search_term, sort_order):
 
 @app.callback(
     Output("modal-article", "is_open"),
-    Output("modal-article-body", "children"),  # Add Output for modal body
+    Output("modal-article-body", "children"),
     [Input({"type": "table-row", "index": ALL}, "n_clicks")],
-    [State("modal-article", "is_open"), State({"type": "table-row", "index": ALL}, "id"), State({"type": "table-row", "index": ALL}, "children")],  # Capture all row children
+    [
+        State("modal-article", "is_open"),
+        State({"type": "table-row", "index": ALL}, "id"),
+        State({"type": "table-row", "index": ALL}, "children"),
+    ],  # Capture all row children
 )
 def toggle_modal_from_table_row_click(n_clicks_list, is_open, row_ids, row_children):
     ctx = dash.callback_context
     if not ctx.triggered:
         return is_open, None
-    
-    clicked_row_id = ctx.triggered[0]['prop_id'].split('.')[0]
-    clicked_row_id_dict = json.loads(clicked_row_id)  # Convert string to dictionary
-    row_idx = clicked_row_id_dict['index']  # Access the 'index' value
+
+    clicked_row_id = ctx.triggered[0]["prop_id"].split(".")[0]
+    clicked_row_id_dict = json.loads(clicked_row_id)
+    row_idx = clicked_row_id_dict["index"]
 
     if any(n_clicks_list):
         clicked_row_children = row_children[row_idx]
-        doi = clicked_row_children[1]['props']['children']
+        doi = clicked_row_children[1]["props"]["children"]
         return True, get_article_info(doi)
 
     return is_open, None
@@ -507,9 +516,7 @@ def get_article_info(input_doi):
     -------
     html.Div: A Div containing the detailed information about the article.
     """
-    response = requests.get(
-        f"http://127.0.0.1:8000/retrieve/?doi={input_doi}"
-    )
+    response = requests.get(f"http://127.0.0.1:8000/retrieve/?doi={input_doi}")
 
     if response.status_code == 200:
         article_info = response.json()
@@ -553,17 +560,15 @@ def get_article_info(input_doi):
                     label="Metadata",
                 ),
             ],
-            className="article-tabs"
+            className="article-tabs",
         )
 
-        # Combine detailed info and tabs in a single Div to avoid list of lists
         return html.Div([detailed_info, tabbed_interface])
     else:
         return html.P(
             "Article not found or error in fetching information.",
             style={"color": custom_colors["dark-blue"]},
         )
-
 
 
 # Run the application
