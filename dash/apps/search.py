@@ -1,7 +1,7 @@
 from dash import html
 import dash_bootstrap_components as dbc
 
-from utils.input_components import article_id_input
+from utils.article_input import article_id_input
 from utils.colors import custom_colors
 
 # Create the layout for the search page

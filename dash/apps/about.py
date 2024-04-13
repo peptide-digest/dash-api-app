@@ -9,5 +9,11 @@ with open("content/about.md", "r") as file:
 
 # Create the layout for the about page
 layout = dbc.Container(
-    [dcc.Markdown(children=about_content, style={"color": custom_colors["dark-blue"]})]
+    [
+        dcc.Markdown(
+            children=about_content,
+            style={"color": custom_colors["dark-blue"]},
+            dangerously_allow_html=True,  # Allow rendering HTML tags
+        )
+    ]
 )

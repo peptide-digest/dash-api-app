@@ -1,14 +1,15 @@
 from dash import dcc, html
 from dash.dependencies import Input, Output
+import dash_bootstrap_components as dbc
 
 from app import app
 from apps import home, about, db_search, navigation, search
 
-url_content_layout = html.Div(
+url_content_layout = dbc.Container(
     [
         dcc.Location(id="url", refresh=False),
         navigation.layout,
-        html.Div(id="page-content"),
+        dbc.Container(id="page-content", className="mt-4"),
     ]
 )
 

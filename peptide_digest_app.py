@@ -13,7 +13,7 @@ sort_options = dbc.RadioItems(
     options=[
         {"label": "New to Old", "value": "new_to_old"},
         {"label": "Old to New", "value": "old_to_new"},
-        {"label": "Score", "value": "score"}, 
+        {"label": "Score", "value": "score"},
     ],
     value="new_to_old",  # Default value
     id="sort-options",
@@ -43,7 +43,7 @@ article_id_input = dbc.InputGroup(
             id="user-input-article-type",
             type="text",
             placeholder="Enter article DOI/URL/PII",
-            style={"color": custom_colors["dark-blue"]},  
+            style={"color": custom_colors["dark-blue"]},
         ),
         dbc.Button(
             "Submit",
@@ -60,40 +60,79 @@ article_id_input = dbc.InputGroup(
 # Initialize the Dash app
 app = dash.Dash(
     __name__,
-    external_stylesheets=[dbc.themes.BOOTSTRAP],
+    external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.BOOTSTRAP],
     meta_tags=[
         {"name": "viewport", "content": "width=device-width, initial-scale=1.0"}
     ],
     suppress_callback_exceptions=True,
 )
 
+server = app.server
+
+navigation_layout = dbc.Navbar(
+    dbc.Container(
+        [
+            dbc.Row(
+                [
+                    dbc.Col(
+                        [
+                            html.Img(src=dash.get_asset_url("logo.png"), width="40"),
+                            dbc.NavbarBrand("Peptide Digest", className="ms-2"),
+                        ],
+                        width={"size": "auto"},
+                    )
+                ],
+                align="center",
+                className="g-0",
+            ),
+            dbc.Row(
+                [
+                    dbc.Col(
+                        [
+                            dbc.Nav(
+                                [
+                                    dbc.NavItem(dbc.NavLink("Home", href="/")),
+                                    dbc.NavItem(
+                                        dbc.NavLink(
+                                            html.I(className="bi bi-search"),
+                                            href="/search",
+                                        )
+                                    ),
+                                    dbc.NavItem(
+                                        dbc.NavLink("DB Search", href="/dbsearch")
+                                    ),
+                                    dbc.NavItem(dbc.NavLink("About", href="/about")),
+                                    dbc.NavItem(
+                                        dbc.NavLink(
+                                            html.I(className="bi bi-github"),
+                                            href="https://github.com/peptide-digest",
+                                            external_link=True,
+                                        )
+                                    ),
+                                ],
+                                navbar=True,
+                            )
+                        ],
+                        width={"size": "auto"},
+                    )
+                ],
+                align="center",
+            ),
+        ],
+        fluid=True,
+    ),
+    color=custom_colors["teal"],
+    dark=True,
+)
+
 # Define the layout of the application
 app.layout = dbc.Container(
     [
         # Navbar
-        dbc.NavbarSimple(
-            children=[
-                dbc.NavItem(dbc.NavLink("Home", href="/")),
-                dbc.NavItem(dbc.NavLink("Search", href="/search")),
-                dbc.NavItem(
-                    dbc.NavLink("DB Search", href="/dbsearch")
-                ), 
-                dbc.NavItem(dbc.NavLink("About", href="/about")),
-            ],
-            brand=html.Div([
-                # Logo and title
-                html.Img(src="assets/peptide_digest_logo.jpeg", height="40px"), 
-                html.Span("Peptide Digest", style={"marginLeft": "10px"})
-            ]),
-            brand_href="/",
-            color=custom_colors["teal"],
-            dark=True,
-        ),
+        navigation_layout,
         # Page content will be rendered by the callback
         dcc.Location(id="url", refresh=False),
-        dbc.Container(
-            id="page-content", className="mt-4"
-        ), 
+        dbc.Container(id="page-content", className="mt-4"),
     ]
 )
 
@@ -111,8 +150,8 @@ def display_page(pathname):
                 article_id_input,  # Include the updated input group here
                 html.Div(
                     id="article-info",
-                    style={"color": custom_colors["dark-blue"]},  
-                ),  
+                    style={"color": custom_colors["dark-blue"]},
+                ),
             ]
         )
     elif pathname == "/about":
@@ -126,15 +165,15 @@ def display_page(pathname):
                 html.Br(),
                 html.P(
                     "We are a team of UC Berkeley students in the Master of Molecular Science and Software Engineering (MSSE) program working with Merck to develop a tool that provides efficient summaries of scientific publications! Our goal is to help Merck researchers stay updated with the latest computational peptide research.",
-                    style={"color": custom_colors["dark-blue"]}, 
+                    style={"color": custom_colors["dark-blue"]},
                 ),
                 html.P(
                     "Our team members include: Joshua Blomgren, Elizabeth Gilson, and Jeffrey Jacob.",
-                    style={"color": custom_colors["dark-blue"]},  
+                    style={"color": custom_colors["dark-blue"]},
                 ),
                 html.P(
                     "We are advised by Dr. Jennifer Johnston, Dr. Gregory Bryman, Dr. Tianchi Chen, and Dr. Wendong Ge from Merck and by Dr. Jessica Nash from MSSE.",
-                    style={"color": custom_colors["dark-blue"]},  
+                    style={"color": custom_colors["dark-blue"]},
                 ),
             ]
         )
@@ -147,9 +186,9 @@ def display_page(pathname):
                     id="db-search-input",
                     placeholder="Enter search term",
                     type="text",
-                    style={"color": custom_colors["dark-blue"]},  
+                    style={"color": custom_colors["dark-blue"]},
                 ),
-                sort_options,  
+                sort_options,
                 dbc.Button(
                     "Search",
                     id="db-search-btn",
@@ -159,7 +198,7 @@ def display_page(pathname):
                 ),
                 html.Div(
                     id="db-search-results",
-                    style={"color": custom_colors["dark-blue"]}, 
+                    style={"color": custom_colors["dark-blue"]},
                 ),
             ]
         )
@@ -174,17 +213,17 @@ def display_page(pathname):
                 ),
                 html.P(
                     "This tool provides efficient summaries of scientific publications, helping researchers stay updated with the latest computational peptide research.",
-                    style={"color": custom_colors["dark-blue"]},  
+                    style={"color": custom_colors["dark-blue"]},
                 ),
                 html.P(
                     "Get started by selecting an article type and entering a DOI, URL, or PII below.",
-                    style={"color": custom_colors["dark-blue"]},  
+                    style={"color": custom_colors["dark-blue"]},
                 ),
                 html.Hr(),
                 article_id_input,  # The input section with the submit button
                 html.Div(
                     id="article-info",
-                    style={"color": custom_colors["dark-blue"]},  
+                    style={"color": custom_colors["dark-blue"]},
                 ),  # This will display the results
             ],
             className="mt-4",
@@ -290,10 +329,10 @@ def update_article_info(n_clicks, input_value, article_type):
                 ),
                 html.P(
                     html.A(
-                        article_info['title'],
-                        href=article_info['url'],
-                        target='_blank',  # Open link in a new tab
-                        style={"color": custom_colors["dark-blue"]}
+                        article_info["title"],
+                        href=article_info["url"],
+                        target="_blank",  # Open link in a new tab
+                        style={"color": custom_colors["dark-blue"]},
                     )
                 ),
             ],
@@ -354,8 +393,13 @@ def update_db_search_results(n_clicks, search_term, sort_order):
             table_header = [
                 html.Th("Title", style={"color": custom_colors["dark-blue"]}),
                 html.Th("DOI", style={"color": custom_colors["dark-blue"]}),
-                html.Th("Date", style={"color": custom_colors["dark-blue"], "width": "10%"}),
-                html.Th("Score", style={"color": custom_colors["dark-blue"], "width": "4.5%"}),
+                html.Th(
+                    "Date", style={"color": custom_colors["dark-blue"], "width": "10%"}
+                ),
+                html.Th(
+                    "Score",
+                    style={"color": custom_colors["dark-blue"], "width": "4.5%"},
+                ),
             ]
             table_rows = [
                 html.Tr(
@@ -379,7 +423,7 @@ def update_db_search_results(n_clicks, search_term, sort_order):
             # If no articles are found, display a message including the search term
             return html.P(
                 f"No articles found matching the search term: '{search_term}'.",
-                style={"color": custom_colors["dark-blue"]},  
+                style={"color": custom_colors["dark-blue"]},
             )
     else:
         # If there's an error with the request, display a generic error message
@@ -387,7 +431,7 @@ def update_db_search_results(n_clicks, search_term, sort_order):
             "An error occurred while fetching search results.",
             style={"color": custom_colors["dark-blue"]},
         )
-    
+
 
 # Run the application
 if __name__ == "__main__":
