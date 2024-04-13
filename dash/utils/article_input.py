@@ -202,3 +202,74 @@ def update_article_info(n_clicks, input_value, article_type):
             "Article not found or error in fetching information.",
             style={"color": custom_colors["dark-blue"]},
         )
+
+
+
+def get_article_info(input_doi):
+    """
+    This function retrieves the article information based on the DOI.
+
+    Parameters:
+    ----------
+    input_doi (str): The DOI of the article.
+
+    Returns:
+    -------
+    html.Div: A Div containing the detailed information about the article.
+    """
+    response = requests.get(
+        f"http://127.0.0.1:8000/retrieve/?doi={input_doi}"
+    )
+
+    if response.status_code == 200:
+        article_info = response.json()
+
+        detailed_info = html.Div(
+            [
+                html.H5(
+                    "Article Information:", style={"color": custom_colors["dark-blue"]}
+                ),
+                html.P(
+                    html.A(
+                        article_info["title"],
+                        href=article_info["url"],
+                        target="_blank",  # Open link in a new tab
+                        style={"color": custom_colors["dark-blue"]},
+                    )
+                ),
+            ],
+            className="article-detailed-info",
+        )
+
+        # Tabbed interface
+        tabbed_interface = dbc.Tabs(
+            [
+                dbc.Tab(
+                    dcc.Markdown(
+                        f"**Bullet Points:**\n{article_info['model_bullet_points']}\n\n"
+                        f"**Summary:**\n{article_info['model_summary']}"
+                    ),
+                    label="Summary",
+                ),
+                dbc.Tab(
+                    dcc.Markdown(
+                        f"**Score:**\n{article_info['model_score']}\n\n"
+                        f"**Scoring Reasoning:**\n{article_info['model_score_justification']}"
+                    ),
+                    label="Scoring Criteria",
+                ),
+                dbc.Tab(
+                    dcc.Markdown(f"**Metadata:**\n{article_info['model_metadata']}"),
+                    label="Metadata",
+                ),
+            ],
+            className="article-tabs"
+        )
+
+        # Combine detailed info and tabs in a single Div to avoid list of lists
+        return html.Div([detailed_info, tabbed_interface])
+    else:
+        return html.P(
+            "Article not found or error in fetching information.",
+            style={"color": custom_colors["dark-blue"]},
+        )

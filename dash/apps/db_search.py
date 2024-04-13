@@ -1,10 +1,14 @@
 from dash import html
 import dash_bootstrap_components as dbc
-from dash.dependencies import Input, Output, State
+from dash import dcc
+from dash.dependencies import Input, Output, State, ALL
 from dash.exceptions import PreventUpdate
 import requests
+import dash
+import json
 
 from utils.colors import custom_colors
+from utils.article_input import get_article_info
 from app import app
 
 
@@ -21,7 +25,23 @@ sort_options = dbc.RadioItems(
     style={"color": custom_colors["dark-blue"]},
 )
 
-# Define the layout for the database search page
+
+modal_trigger = html.Button("Open Modal", id="open-modal-btn", style={'display': 'none'})  # Add a button to trigger the modal
+modal = html.Div(
+    [
+        dbc.Modal(
+            [
+                dbc.ModalHeader("Article Information", style={"color": custom_colors["dark-blue"]}),
+                dbc.ModalBody(id="modal-article-body"),
+            ],
+            id="modal-article",
+            size="xl",
+            is_open=False,
+        )
+    ]
+)
+
+# Add the modal_trigger and modal to your layout
 layout = dbc.Container(
     [
         html.H2("Database Search", style={"color": custom_colors["dark-blue"]}),
@@ -43,6 +63,8 @@ layout = dbc.Container(
             id="db-search-results",
             style={"color": custom_colors["dark-blue"]},
         ),
+        modal_trigger, 
+        modal, 
     ]
 )
 
@@ -99,9 +121,13 @@ def update_db_search_results(n_clicks, search_term, sort_order):
                         html.Td(article["doi"]),
                         html.Td(article["date"]),
                         html.Td(article["score"]),
-                    ]
+                    ],
+                    id={'type': 'table-row', 'index': i},  # Add an id to each table row
+                    # Add a callback to toggle the modal when the table row is clicked
+                    n_clicks=0,
+                    style={'cursor': 'pointer'}
                 )
-                for article in articles
+                for i, article in enumerate(articles)
             ]
             return dbc.Table(
                 [html.Thead(table_header), html.Tbody(table_rows)],
@@ -122,3 +148,45 @@ def update_db_search_results(n_clicks, search_term, sort_order):
             "An error occurred while fetching search results.",
             style={"color": custom_colors["dark-blue"]},
         )
+
+
+# @app.callback(
+#     Output("modal-article", "is_open"),
+#     [Input({"type": "table-row", "index": ALL}, "n_clicks")],
+#     [State({"type": "table-row", "index": ALL}, "id")]
+# )
+# def toggle_modal_from_table_row_click(n_clicks_list, row_ids):
+#     ctx = dash.callback_context
+#     if not ctx.triggered:
+#         return False
+
+#     clicked_row_id = ctx.triggered[0]['prop_id'].split('.')[0]
+#     clicked_row_id_dict = json.loads(clicked_row_id)  # Convert string to dictionary
+#     index_value = clicked_row_id_dict['index']  # Access the 'index' value
+#     return False
+
+
+@app.callback(
+    Output("modal-article", "is_open"),
+    Output("modal-article-body", "children"),  # Add Output for modal body
+    [Input({"type": "table-row", "index": ALL}, "n_clicks")],
+    [State("modal-article", "is_open"), State({"type": "table-row", "index": ALL}, "id"), State({"type": "table-row", "index": ALL}, "children")],  # Capture all row children
+)
+def toggle_modal_from_table_row_click(n_clicks_list, is_open, row_ids, row_children):
+    ctx = dash.callback_context
+    if not ctx.triggered:
+        return is_open, None
+    
+    clicked_row_id = ctx.triggered[0]['prop_id'].split('.')[0]
+    clicked_row_id_dict = json.loads(clicked_row_id)  # Convert string to dictionary
+    row_idx = clicked_row_id_dict['index']  # Access the 'index' value
+
+    if any(n_clicks_list):
+        clicked_row_children = row_children[row_idx]
+        doi = clicked_row_children[1]['props']['children']
+        return True, get_article_info(doi)
+
+    return is_open, None
+
+
+
