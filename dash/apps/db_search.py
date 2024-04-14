@@ -7,7 +7,7 @@ import dash
 import json
 
 from utils.colors import custom_colors
-from utils.article_input import get_article_info
+from utils.article_input import get_article_info, submit_feedback
 from app import app
 
 
@@ -160,7 +160,7 @@ def update_db_search_results(n_clicks, search_term, sort_order):
         State("modal-article", "is_open"),
         State({"type": "table-row", "index": ALL}, "id"),
         State({"type": "table-row", "index": ALL}, "children"),
-    ],  # Capture all row children
+    ],
 )
 def toggle_modal_from_table_row_click(n_clicks_list, is_open, row_ids, row_children):
     ctx = dash.callback_context
@@ -174,6 +174,9 @@ def toggle_modal_from_table_row_click(n_clicks_list, is_open, row_ids, row_child
     if any(n_clicks_list):
         clicked_row_children = row_children[row_idx]
         doi = clicked_row_children[1]["props"]["children"]
-        return True, get_article_info(doi)
+        article_info = get_article_info(doi)
+        if article_info is None:
+            return is_open, None
+        return True, article_info
 
     return is_open, None
