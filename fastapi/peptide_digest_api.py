@@ -41,7 +41,7 @@ def retrieve_article(doi=None, url=None, pii=None):
         else:
             url = "https://www." + url
 
-    conn = sqlite3.connect("articles.db")
+    conn = sqlite3.connect("../data/articles.db")
     c = conn.cursor()
     if doi:
         c.execute("SELECT * FROM articles WHERE doi=?", (doi,))
