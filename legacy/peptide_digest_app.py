@@ -612,7 +612,7 @@ def submit_feedback(n_clicks, name, doi, feedback):
         raise PreventUpdate
 
     if name and doi and feedback:
-        with open("feedback.csv", "a") as f:
+        with open("../data/feedback.csv", "a") as f:
             f.write(f"{name},{feedback},{doi}\n")
         return "Feedback submitted successfully!"
     else:
