@@ -91,7 +91,7 @@ async def retrieve(doi: str = None, url: str = None, pii: str = None):
 
 @app.get("/search/")
 async def search_papers(term: str, sort: str = "new_to_old"):
-    conn = sqlite3.connect("articles.db")
+    conn = sqlite3.connect("../data/articles.db")
     c = conn.cursor()
 
     # Determine the ORDER BY clause based on the sort parameter
