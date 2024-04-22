@@ -1,13 +1,12 @@
-from dash import html
+from dash import html, ctx, no_update
 import dash_bootstrap_components as dbc
-from dash.dependencies import Input, Output, State, ALL
+from dash.dependencies import Input, Output, State
+import dash_ag_grid as ag
 from dash.exceptions import PreventUpdate
 import requests
-import dash
-import json
 
 from utils.colors import custom_colors
-from utils.article_input import get_article_info, submit_feedback
+from utils.article_input import get_article_info
 from app import app
 
 
@@ -24,50 +23,63 @@ sort_options = dbc.RadioItems(
     style={"color": custom_colors["dark-blue"]},
 )
 
-
-modal_trigger = html.Button(
-    "Open Modal", id="open-modal-btn", style={"display": "none"}
-)  # Add a button to trigger the modal
-modal = html.Div(
+# Popup displaying article information
+article_popup = dbc.Modal(
     [
-        dbc.Modal(
-            [
-                dbc.ModalHeader(
-                    "Article Information", style={"color": custom_colors["dark-blue"]}
-                ),
-                dbc.ModalBody(id="modal-article-body"),
-            ],
-            id="modal-article",
-            size="xl",
-            is_open=False,
-        )
-    ]
+        dbc.ModalHeader(
+            "Article Information", style={"color": custom_colors["dark-blue"]}
+        ),
+        dbc.ModalBody(id="article-body-modal"),
+        dbc.ModalFooter(
+            dbc.Button(
+                "Close",
+                id="article-modal-close",
+                className="ml-auto",
+                style={"background-color": custom_colors["teal"]},
+            )
+        ),
+    ],
+    id="article-selection-modal",
+    size="xl",
+    is_open=False,
+    scrollable=True,
 )
 
-
+# Layout for the database search page
 layout = dbc.Container(
     [
         html.H2("Database Search", style={"color": custom_colors["dark-blue"]}),
-        dbc.Input(
-            id="db-search-input",
-            placeholder="Enter search term",
-            type="text",
-            style={"color": custom_colors["dark-blue"]},
+        # Input field and search button
+        dbc.InputGroup(
+            [
+                dbc.Input(
+                    id="db-search-input",
+                    placeholder="Enter search term",
+                    type="text",
+                    style={"color": custom_colors["dark-blue"]},
+                ),
+                dbc.Button(
+                    "Search",
+                    id="db-search-btn",
+                    color="primary",
+                    n_clicks=0,
+                    style={"background-color": custom_colors["teal"]},
+                ),
+            ]
         ),
         sort_options,
-        dbc.Button(
-            "Search",
-            id="db-search-btn",
-            color="primary",
-            className="mt-2",
-            style={"background-color": custom_colors["teal"]},
-        ),
+        # Display search results
         html.Div(
-            id="db-search-results",
-            style={"color": custom_colors["dark-blue"]},
+            [
+                html.Div(
+                    id="db-search-results",
+                    style={"color": custom_colors["dark-blue"]},
+                ),
+            ],
+            style={"margin-top": "20px"},  # Add margin top
         ),
-        modal_trigger,
-        modal,
+        # Display article information modal when a row is selected
+        article_popup,
     ]
 )
 
@@ -105,39 +117,54 @@ def update_db_search_results(n_clicks, search_term, sort_order):
     if response.status_code == 200:
         articles = response.json()
         if articles:
-            # If articles are found, display them
-            table_header = [
-                html.Th("Title", style={"color": custom_colors["dark-blue"]}),
-                html.Th("DOI", style={"color": custom_colors["dark-blue"]}),
-                html.Th(
-                    "Date", style={"color": custom_colors["dark-blue"], "width": "10%"}
-                ),
-                html.Th(
-                    "Score",
-                    style={"color": custom_colors["dark-blue"], "width": "4.5%"},
-                ),
+            # Define the columns for the search results table
+            columnDefs = [
+                {"field": "title", "width": 700, "suppressSizeToFit": True},
+                {"field": "doi", "headerName": "DOI", "width": 400},
+                {"field": "date"},
+                {"field": "score"},
             ]
-            table_rows = [
-                html.Tr(
-                    [
-                        html.Td(article["title"]),
-                        html.Td(article["doi"]),
-                        html.Td(article["date"]),
-                        html.Td(article["score"]),
-                    ],
-                    id={"type": "table-row", "index": i},  # Add an id to each table row
-                    n_clicks=0,
-                    style={"cursor": "pointer"},
-                )
+
+            # Create a list of dictionaries for the search results
+            article_data = [
+                {
+                    "id": i,
+                    "title": article["title"],
+                    "doi": article["doi"],
+                    "date": article["date"],
+                    "score": article["score"],
+                }
                 for i, article in enumerate(articles)
             ]
-            return dbc.Table(
-                [html.Thead(table_header), html.Tbody(table_rows)],
-                bordered=True,
-                hover=True,
-                responsive=True,
-                striped=True,
+
+            # Create an Ag-Grid table with the search results
+            grid = ag.AgGrid(
+                id="db-results-grid",
+                rowData=article_data,
+                columnDefs=columnDefs,
+                dashGridOptions={
+                    "rowSelection": "single",
+                    "pagination": True,
+                    "groupHeaderHeight": 100,
+                    "enableCellTextSelection": True,
+                    "ensureDomOrder": True,
+                    "defaultColDef": {
+                        "filter": True,
+                        "filterParams": {
+                            "buttons": ["apply", "reset"],
+                            "closeOnApply": True,
+                            "suppressAndOrCondition": True,
+                            "inRangeInclusive": True,
+                        },
+                    },
+                },
+                columnSize="sizeToFit",
+                style={"height": 800, "width": "100%"},
+                className="ag-theme-quartz",
             )
+
+            return grid
+
         else:
             # If no articles are found, display a message including the search term
             return html.P(
@@ -153,30 +180,41 @@ def update_db_search_results(n_clicks, search_term, sort_order):
 
 
 @app.callback(
-    Output("modal-article", "is_open"),
-    Output("modal-article-body", "children"),
-    [Input({"type": "table-row", "index": ALL}, "n_clicks")],
-    [
-        State("modal-article", "is_open"),
-        State({"type": "table-row", "index": ALL}, "id"),
-        State({"type": "table-row", "index": ALL}, "children"),
-    ],
+    Output("article-selection-modal", "is_open"),
+    Output("article-body-modal", "children"),
+    Input("db-results-grid", "selectedRows"),
+    Input("article-modal-close", "n_clicks"),
+    prevent_initial_call=True,
 )
-def toggle_modal_from_table_row_click(n_clicks_list, is_open, row_ids, row_children):
-    ctx = dash.callback_context
-    if not ctx.triggered:
-        return is_open, None
+def display_article_modal(selection, _):
+    """
+    This function displays the article information modal when a row is selected in the search results.
 
-    clicked_row_id = ctx.triggered[0]["prop_id"].split(".")[0]
-    clicked_row_id_dict = json.loads(clicked_row_id)
-    row_idx = clicked_row_id_dict["index"]
+    Parameters:
+    ----------
+    selection (list): The selected row in the search results.
+    _ (int): The number of times the close button has been clicked.
 
-    if any(n_clicks_list):
-        clicked_row_children = row_children[row_idx]
-        doi = clicked_row_children[1]["props"]["children"]
-        article_info = get_article_info(doi)
-        if article_info is None:
-            return is_open, None
-        return True, article_info
+    Returns:
+    --------
+    bool: Whether the modal is open or closed.
+    html.Div: The article information displayed in the modal.
 
-    return is_open, None
+    Raises:
+    -------
+    PreventUpdate: If no input is provided.
+    """
+    if not ctx.triggered or ctx.triggered_id == "article-modal-close":
+        return False, no_update
+
+    if not selection:
+        return no_update, no_update
+
+    article_doi = selection[0].get("doi")
+    if not article_doi:
+        return no_update, no_update
+
+    article_info = get_article_info(article_doi)
+    if article_info is None:
+        return False, no_update
+    return True, article_info
