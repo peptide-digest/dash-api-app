@@ -43,37 +43,70 @@ def retrieve_article(doi=None, url=None, pii=None):
 
     conn = sqlite3.connect("../data/articles.db")
     c = conn.cursor()
+
     if doi:
-        c.execute("SELECT * FROM articles WHERE doi=?", (doi,))
+        c.execute(
+            """SELECT * FROM article_info WHERE doi = ?""",
+            (doi,),
+        )
+        article_info = c.fetchone()
+
+        c.execute(
+            """SELECT * FROM model_responses WHERE doi = ?""",
+            (doi,),
+        )
+        model_responses = c.fetchone()
+    
     elif url:
-        c.execute("SELECT * FROM articles WHERE url=?", (url,))
+        c.execute(
+            """SELECT * FROM article_info WHERE url = ?""",
+            (url,),
+        )
+        article_info = c.fetchone()
+
+        c.execute(
+            """SELECT * FROM model_responses WHERE url = ?""",
+            (url,),
+        )
+        model_responses = c.fetchone()
+    
     elif pii:
         pii = "https://www.sciencedirect.com/science/article/pii/" + pii
-        c.execute("SELECT * FROM articles WHERE url=?", (pii,))
+        c.execute(
+            """SELECT * FROM article_info WHERE url = ?""",
+            (pii,),
+        )
+        article_info = c.fetchone()
+
+        c.execute(
+            """SELECT * FROM model_responses WHERE url = ?""",
+            (pii,),
+        )
+        model_responses = c.fetchone()
     else:
         return "No article identifier provided."
-    article = c.fetchone()
     conn.close()
 
-    if article:
-        article_info = {
-            "title": article[0],
-            "authors": article[1],
-            "journal": article[2],
-            "publisher": article[3],
-            "date": article[4],
-            "url": article[5],
-            "doi": article[6],
-            "keywords": article[7],
-            "model_bullet_points": article[8],
-            "model_summary": article[9],
-            "model_metadata": article[10],
-            "peptides": article[11],
-            "proteins": article[12],
-            "model_score": article[13],
-            "model_score_justification": article[14],
+    if article_info and model_responses:
+        article_result = {
+            "title": article_info[1],
+            "authors": article_info[2],
+            "journal": article_info[3],
+            "publisher": article_info[4],
+            "date": article_info[5],
+            "url": article_info[6],
+            "doi": article_info[7],
+            "keywords": article_info[8],
+            "scidir/pmc": article_info[9],  
+            "pmc_id": article_info[10],  
+            "bullet_points": model_responses[2],
+            "summary": model_responses[3],
+            "metadata": model_responses[4],
+            "score": model_responses[5],
+            "score_justification": model_responses[6]
         }
-        return article_info
+
+        return article_result
     else:
         return "Article not found in database."
 
@@ -96,14 +129,16 @@ async def search_papers(term: str, sort: str = "new_to_old"):
 
     # Determine the ORDER BY clause based on the sort parameter
     if sort == "score":
-        order_by_clause = "model_score DESC"
+        order_by_clause = "model_responses.score DESC"
     else:
         # Default to sorting by date
-        order_by_clause = "date DESC" if sort == "new_to_old" else "date ASC"
+        order_by_clause = "article_info.date DESC" if sort == "new_to_old" else "article_info.date ASC"
 
-    query = f"""SELECT title, doi, date, model_score FROM articles
-                WHERE keywords LIKE '%' || ? || '%'
-                OR model_metadata LIKE '%' || ? || '%'
+    query = f"""SELECT article_info.title, article_info.doi, article_info.date, model_responses.score 
+                FROM article_info
+                LEFT JOIN model_responses ON article_info.doi = model_responses.doi
+                WHERE article_info.keywords LIKE '%' || ? || '%'
+                OR model_responses.metadata LIKE '%' || ? || '%'
                 ORDER BY {order_by_clause}"""
     c.execute(
         query,

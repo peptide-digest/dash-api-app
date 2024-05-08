@@ -27,7 +27,7 @@ sort_options = dbc.RadioItems(
 article_popup = dbc.Modal(
     [
         dbc.ModalHeader(
-            "Article Information", style={"color": custom_colors["dark-blue"]}
+            "Article", style={"color": custom_colors["dark-blue"]}
         ),
         dbc.ModalBody(id="article-body-modal"),
         dbc.ModalFooter(
@@ -120,7 +120,7 @@ def update_db_search_results(n_clicks, search_term, sort_order):
             # Define the columns for the search results table
             columnDefs = [
                 {"field": "title", "width": 700, "suppressSizeToFit": True},
-                {"field": "doi", "headerName": "DOI", "width": 400},
+                {"field": "doi", "headerName": "DOI", "width": 300},
                 {"field": "date"},
                 {"field": "score"},
             ]

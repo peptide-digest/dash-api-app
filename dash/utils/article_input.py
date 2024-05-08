@@ -155,9 +155,9 @@ def update_article_info(n_clicks, input_value, article_type):
 
         detailed_info = html.Div(
             [
-                html.H5(
-                    "Article Information:", style={"color": custom_colors["dark-blue"]}
-                ),
+                html.H5("Article Information:", style={"color": custom_colors["dark-blue"]}),
+                html.P(f"DOI: {article_info['doi']}", id="displayed-doi", style={"color": custom_colors["dark-blue"]}),
+
                 html.P(
                     html.A(
                         article_info["title"],
@@ -174,9 +174,9 @@ def update_article_info(n_clicks, input_value, article_type):
         feedback_tab = dbc.Tab(
             [
                 dbc.Input(id="name-input", placeholder="Enter your name", type="text"),
-                dbc.Input(id="doi-input", placeholder="Enter the article DOI", type="text"),
+                dbc.Input(id="doi-input", value="", placeholder="Enter the article DOI", type="text"),
                 dbc.Textarea(id="feedback-input", placeholder="Enter your feedback", rows=3),
-                dbc.Button("Submit Feedback", id="submit-feedback-btn", color="primary", className="mt-2"),
+                dbc.Button("Submit Feedback", id="submit-feedback-btn", color="success", className="mt-2"),
                 html.Div(id="feedback-message")
             ],
             label="Submit Feedback"
@@ -187,20 +187,30 @@ def update_article_info(n_clicks, input_value, article_type):
             [
                 dbc.Tab(
                     dcc.Markdown(
-                        f"**Bullet Points:**\n{article_info['model_bullet_points']}\n\n"
-                        f"**Summary:**\n{article_info['model_summary']}"
+                        f"**Authors:**\n{article_info['authors']}\n\n"
+                        f"**Journal:**\n{article_info['journal']}\n\n"
+                        f"**Date:**\n{article_info['date']}\n\n"
+                        f"**DOI:**\n{article_info['doi']}\n\n"
+                        f"**Keywords:**\n{article_info['keywords']}"
+                    ),
+                    label="Article Info",
+                ),
+                dbc.Tab(
+                    dcc.Markdown(
+                        f"**Bullet Points:**\n{article_info['bullet_points']}\n\n"
+                        f"**Summary:**\n{article_info['summary']}"
                     ),
                     label="Summary",
                 ),
                 dbc.Tab(
                     dcc.Markdown(
-                        f"**Score:**\n{article_info['model_score']}\n\n"
-                        f"**Scoring Reasoning:**\n{article_info['model_score_justification']}"
+                        f"**Score:**\n{article_info['score']}\n\n"
+                        f"**Scoring Reasoning:**\n{article_info['score_justification']}"
                     ),
                     label="Scoring Criteria",
                 ),
                 dbc.Tab(
-                    dcc.Markdown(f"**Metadata:**\n{article_info['model_metadata']}"),
+                    dcc.Markdown(f"**Metadata:**\n{article_info['metadata']}"),
                     label="Metadata",
                 ),
 
@@ -237,9 +247,9 @@ def get_article_info(input_doi):
 
         detailed_info = html.Div(
             [
-                html.H5(
-                    "Article Information:", style={"color": custom_colors["dark-blue"]}
-                ),
+                html.H5("Article Information:", style={"color": custom_colors["dark-blue"]}),
+                html.H5(f"DOI: {article_info['doi']}", id="displayed-doi", style={"color": custom_colors["dark-blue"]}),
+
                 html.P(
                     html.A(
                         article_info["title"],
@@ -253,34 +263,44 @@ def get_article_info(input_doi):
         )
 
         feedback_tab = dbc.Tab(
-    [
-        dbc.Input(id="name-input", placeholder="Enter your name", type="text"),
-        dbc.Input(id="doi-input", placeholder="Enter the article DOI", type="text"),
-        dbc.Textarea(id="feedback-input", placeholder="Enter your feedback", rows=3),
-        dbc.Button("Submit Feedback", id="submit-feedback-btn", color="primary", className="mt-2"),
-        html.Div(id="feedback-message")
-    ],
-    label="Submit Feedback"
-)
+            [
+                dbc.Input(id="name-input", placeholder="Enter your name", type="text"),
+                dbc.Input(id="doi-input", value="", placeholder="Enter the article DOI", type="text"),
+                dbc.Textarea(id="feedback-input", placeholder="Enter your feedback", rows=3),
+                dbc.Button("Submit Feedback", id="submit-feedback-btn", color="success", className="mt-2"),
+                html.Div(id="feedback-message")
+            ],
+            label="Submit Feedback"
+        )
         # Tabbed interface
         tabbed_interface = dbc.Tabs(
             [
                 dbc.Tab(
                     dcc.Markdown(
-                        f"**Bullet Points:**\n{article_info['model_bullet_points']}\n\n"
-                        f"**Summary:**\n{article_info['model_summary']}"
+                        f"**Authors:**\n{article_info['authors']}\n\n"
+                        f"**Journal:**\n{article_info['journal']}\n\n"
+                        f"**Date:**\n{article_info['date']}\n\n"
+                        f"**DOI:**\n{article_info['doi']}\n\n"
+                        f"**Keywords:**\n{article_info['keywords']}"
+                    ),
+                    label="Article Info",
+                ),
+                dbc.Tab(
+                    dcc.Markdown(
+                        f"**Bullet Points:**\n{article_info['bullet_points']}\n\n"
+                        f"**Summary:**\n{article_info['summary']}"
                     ),
                     label="Summary",
                 ),
                 dbc.Tab(
                     dcc.Markdown(
-                        f"**Score:**\n{article_info['model_score']}\n\n"
-                        f"**Scoring Reasoning:**\n{article_info['model_score_justification']}"
+                        f"**Score:**\n{article_info['score']}\n\n"
+                        f"**Scoring Reasoning:**\n{article_info['score_justification']}"
                     ),
                     label="Scoring Criteria",
                 ),
                 dbc.Tab(
-                    dcc.Markdown(f"**Metadata:**\n{article_info['model_metadata']}"),
+                    dcc.Markdown(f"**Metadata:**\n\n{article_info['metadata']}"),
                     label="Metadata",
                 ),
                 feedback_tab
@@ -307,8 +327,25 @@ def submit_feedback(n_clicks, name, doi, feedback):
         raise PreventUpdate
 
     if name and doi and feedback:
-        with open("../data/feedback.csv", "a") as f:
-            f.write(f"{name},{feedback},{doi}\n")
-        return "Feedback submitted successfully!"
+        try:
+            with open("/usr/src/app/data/feedback.csv", "a") as f:
+                f.write(f"{name},{feedback},{doi}\n")
+                f.flush()  # Flush the file buffer
+                print("Feedback data written to file")  # Print a message to indicate success
+            return "Feedback submitted successfully!"
+        except Exception as e:
+            print(f"Error writing feedback data to file: {str(e)}")  # Print any error that occurs
+            return "An error occurred while submitting the feedback."
     else:
         return "Please enter your name, the article DOI, and feedback."
+        
+@app.callback(
+    Output("doi-input", "value"),
+    [Input("displayed-doi", "children")]
+)
+def update_doi_input(displayed_doi):
+    if displayed_doi:
+        doi = displayed_doi.split(': ')[1]
+        return doi
+    else:
+        return ""
