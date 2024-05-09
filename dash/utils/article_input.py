@@ -190,7 +190,6 @@ def update_article_info(n_clicks, input_value, article_type):
                         f"**Authors:**\n{article_info['authors']}\n\n"
                         f"**Journal:**\n{article_info['journal']}\n\n"
                         f"**Date:**\n{article_info['date']}\n\n"
-                        f"**DOI:**\n{article_info['doi']}\n\n"
                         f"**Keywords:**\n{article_info['keywords']}"
                     ),
                     label="Article Info",
@@ -280,7 +279,6 @@ def get_article_info(input_doi):
                         f"**Authors:**\n{article_info['authors']}\n\n"
                         f"**Journal:**\n{article_info['journal']}\n\n"
                         f"**Date:**\n{article_info['date']}\n\n"
-                        f"**DOI:**\n{article_info['doi']}\n\n"
                         f"**Keywords:**\n{article_info['keywords']}"
                     ),
                     label="Article Info",
